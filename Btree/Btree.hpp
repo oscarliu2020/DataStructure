@@ -24,17 +24,18 @@ public:
     }
     BNode<T,t>* search(T key);
     void insert(T key);
-    int prev(T key);
-    int next(T key);
     void traverse();
     void remove(T key);
 private:
-    void removeLeaf(T key);
+    void removeLeaf(BNode<T,t>*,T );
+    void removeNoneLeaf(BNode<T,t>*,T);
     int findKey(BNode<T,t>* x,T key);
     void merge(BNode<T,t>* x,int i);
     void traverse(BNode<T,t>* p);
     void split(BNode<T,t>* x,int i);
     void insertNonFull(BNode<T,t>* x,T key);
+    int prev(BNode<T,t>* x);
+    int next(BNode<T,t>* x);
     BNode<T,t>* root;
     Comp cmp;
 };

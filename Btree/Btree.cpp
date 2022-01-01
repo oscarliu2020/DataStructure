@@ -102,14 +102,13 @@ template<class T,int t,class Comp>
 void Btree<T,t,Comp>::merge(BNode<T,t>* x,int i){
     BNode<T,t>* y=x->ch[i];
     BNode<T,t>* z=x->ch[i+1];
-
+    y->key[t-1]=x->key[i];
     for(int j=0;j<z->n;j++)
         y->key[j+t]=z->key[j];
     if(!y->leaf)
         for(int j=0;j<=z->n;j++)
-            y->ch[j]=z->ch[j+t];
+            y->ch[j+t]=z->ch[j];
     for(int j=i+1;j<x->n;j++)x->key[j-1]=x->key[j];
-    
     for(int j=i+2;j<=n;j++)x->ch[j-1]=x->ch[j];
     y->n+=z->n+1;
     --x->n;
@@ -117,14 +116,22 @@ void Btree<T,t,Comp>::merge(BNode<T,t>* x,int i){
 }
 
 template<class T,int t,class Comp>
-int Btree<T,t,Comp>::prev(T k)
+int Btree<T,t,Comp>::prev(BNode<T,t>* x)
 {
-    
+    while(!x->leaf)
+    {
+        x=x->ch[x->n];
+    }
+    return x->key[x->n-1];
 }
 template<class T,int t,class Comp>
-int Btree<T,t,Comp>::next(T k)
+int Btree<T,t,Comp>::next(BNode<T,t>* x)
 {
-    
+    while(!x->leaf)
+    {
+        x=x->ch[0];
+    }
+    return x->key[0];
 }
 template<class T,int t,class Comp>
 int Btree<T,t,Comp>::findKey(BNode<T,t>* x,T k)
@@ -133,4 +140,13 @@ int Btree<T,t,Comp>::findKey(BNode<T,t>* x,T k)
     while(i<x->n&&cmp(x->key[i],k))++i;
     if(!cmp(x,x->key[i]))return i;
     return -1;
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::removeLeaf(BNode<T,t>* x,int i){
+    for(int j=i+1;j<x->n;j++)
+        x->key[j-1]=x->key[j];
+}
+template<class T, int t,class Comp>
+void Btree<T,t,Comp>::removeNonLeaf(BNode<T,t>* x,T k){
+    if(x.)
 }
