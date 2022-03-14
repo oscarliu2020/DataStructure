@@ -19,7 +19,7 @@ public:
         root->leaf=true;
         root->n=0;
     }
-    ~BTree(){
+    ~Btree(){
         delete root;
     }
     BNode<T,t>* search(T key);
@@ -27,8 +27,9 @@ public:
     void traverse();
     void remove(T key);
 private:
-    void removeLeaf(BNode<T,t>*,T );
-    void removeNoneLeaf(BNode<T,t>*,T);
+    void remove(T key,BNode<T,t>* x);
+    void removeLeaf(BNode<T,t>*,int );
+    void removeNonLeaf(BNode<T,t>*,int);
     int findKey(BNode<T,t>* x,T key);
     void merge(BNode<T,t>* x,int i);
     void traverse(BNode<T,t>* p);
@@ -36,6 +37,9 @@ private:
     void insertNonFull(BNode<T,t>* x,T key);
     int prev(BNode<T,t>* x);
     int next(BNode<T,t>* x);
+    void fill(BNode<T,t>* x,int idx);
+    void fromLeft(BNode<T,t>* ,int);
+    void fromRight(BNode<T,t>*,int);
     BNode<T,t>* root;
     Comp cmp;
 };

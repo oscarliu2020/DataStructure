@@ -43,7 +43,7 @@ void Btree< T, t, Comp>::insert(T k){
 }
 template<class T,int t,class Comp>
 void Btree< T, t, Comp>::insertNonFull(BNode<T,t>* x, T k){
-    cout<<k<<": "<<x->key[0]<<'\n';
+//    cout<<k<<": "<<x->key[0]<<'\n';
     if(x->leaf){
         int i=x->n-1;
         //cout<<x->n<<" *\n";
@@ -109,7 +109,7 @@ void Btree<T,t,Comp>::merge(BNode<T,t>* x,int i){
         for(int j=0;j<=z->n;j++)
             y->ch[j+t]=z->ch[j];
     for(int j=i+1;j<x->n;j++)x->key[j-1]=x->key[j];
-    for(int j=i+2;j<=n;j++)x->ch[j-1]=x->ch[j];
+    for(int j=i+2;j<=x->n;j++)x->ch[j-1]=x->ch[j];
     y->n+=z->n+1;
     --x->n;
     delete z;
@@ -138,15 +138,112 @@ int Btree<T,t,Comp>::findKey(BNode<T,t>* x,T k)
 {
     int i=0;
     while(i<x->n&&cmp(x->key[i],k))++i;
-    if(!cmp(x,x->key[i]))return i;
-    return -1;
+    return i;
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::remove(T k,BNode<T,t>* x){
+    int idx=findKey(x,k);
+    if(idx<x->n&&x->key[idx]==k){
+        if(x->leaf)
+            removeLeaf(x,idx);
+        else
+            removeNonLeaf(x,idx);
+    }else{
+        if(x->leaf){
+            cout<<"not exist.\n";
+            return;
+        }
+        bool flag=(idx==x->n);
+        if(x->ch[idx]->n<t)
+            fill(x,idx);
+        if(flag&&idx>x->n)
+            remove(k,x->ch[idx-1]);
+        else
+            remove(k,x->ch[idx]);
+    }
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::fromLeft(BNode<T,t>* x,int idx){
+    int k=x->key[idx-1];
+    BNode<T,t>* l=x->ch[idx-1];
+    BNode<T,t>* cur=x->ch[idx];
+    x->key[idx-1]=l->key[l->n-1];
+    for(int i=cur->n;i>=1;i--){
+        cur->key[i]=cur->key[i-1];
+    }
+    cur->key[0]=k;
+    if(!cur->leaf){
+        for(int i=cur->n;i>=0;i--)
+                cur->ch[i+1]=cur->ch[i];
+    }
+    if(!cur->leaf)
+        cur->ch[0]=l->ch[l->n];
+    --l->n;
+    ++cur->n;
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::fromRight(BNode<T,t>* x,int idx){
+    int k=x->key[idx];
+    BNode<T,t>* r=x->ch[idx+1];
+    BNode<T,t>* cur=x->ch[idx];
+    x->key[idx]=r->key[0];
+    cur->key[cur->n]=k;
+    if(!cur->leaf)
+        cur->ch[cur->n+1]=r->ch[0];
+    for(int i=1;i<r->n;i++)
+        r->key[i-1]=r->key[i];
+    if(!r->leaf)
+        for(int i=1;i<=r->n;i++)
+            r->ch[i-1]=r->ch[i];
+    --r->n;
+    ++cur->n;
+
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::fill(BNode<T,t>* x,int idx){
+    if(idx&&x->ch[idx-1]->n>=t)
+        fromLeft(x,idx);
+    else if(idx!=x->n&&x->ch[idx+1]->n>=t)
+        fromRight(x,idx);
+    else{
+        if(idx!=x->n)
+            merge(x,idx);
+        else
+            merge(x,idx-1);
+    }
 }
 template<class T,int t,class Comp>
 void Btree<T,t,Comp>::removeLeaf(BNode<T,t>* x,int i){
     for(int j=i+1;j<x->n;j++)
         x->key[j-1]=x->key[j];
+    --x->n;
 }
 template<class T, int t,class Comp>
-void Btree<T,t,Comp>::removeNonLeaf(BNode<T,t>* x,T k){
-    if(x.)
+void Btree<T,t,Comp>::removeNonLeaf(BNode<T,t>* x,int id){
+    
+    if(x->ch[id]->n>=t){
+        int p=prev(x->ch[id]);
+        x->key[id]=p;
+        remove(p,x->ch[id]);
+    }else if(x->ch[id+1]->n>=t){
+        int s=next(x->ch[id+1]);
+        x->key[id]=s;
+        remove(s,x->ch[id+1]);
+    }else{
+        merge(x,id);
+        remove(x->key[id],x->ch[id]);
+    }
+}
+template<class T,int t,class Comp>
+void Btree<T,t,Comp>::remove(T k){
+    if(!root)cout<<"The tree is empty\n";
+    remove(k,root);
+    if(root->n==0){
+        BNode<T,t>* tmp=root;
+        if(root->leaf)
+            root=NULL;
+        else
+            root=root->ch[0];
+        delete tmp;
+    }
 }

@@ -9,9 +9,12 @@ int main(){
 	T.insert(4);
 	T.insert(6);
 	T.insert(0);
-	auto res= T.search(3);
+	T.remove(6);
+	T.remove(0);
+	T.remove(7);
+	auto res= T.search(6);
 	if(res==NULL)cout<<"not found\n";
-	for(auto k:res->key){
+    else	for(auto k:res->key){
 		cout<<k<<endl;
 	}
 	T.traverse();
