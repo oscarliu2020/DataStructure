@@ -13,7 +13,7 @@ void Btree< T, t, Comp>::split(BNode<T,t>* x,int i){
         for(int j=0;j<t;j++)
             z->ch[j]=y->ch[j+t];
     y->n=z->n=t-1;
-    for(int j=x->n;i=j>=i+1;j--)x->ch[j+1]=x->ch[j];
+    for(int j=x->n;j>=i+1;j--)x->ch[j+1]=x->ch[j];
     x->ch[i+1]=z;
     for(int j=x->n-1;j>=i;j--)x->key[j+1]=x->key[j];
     x->key[i]=y->key[t-1];
