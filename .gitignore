@@ -3,3 +3,13 @@
 !*/
 *.o
 *.a
+.DS_Store/
+.vscode/
+RBTreeMap.hpp
+demo.cpp
+test_*.cpp
+*.dSYM/
+*.in
+*.out
+*.txt
+.DS_Store
