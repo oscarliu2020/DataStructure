@@ -257,7 +257,7 @@ class RBtree {
        //size_t sz=cur->parent()->sz;
         if(sib->direction()==0){
             Ptr t=sib->parent();
-            if(sib->right!=nullptr&&sib->right->isred()){
+            if(sib->right!=nullptr&&sib->right->isred()&&(sib->left==nullptr||sib->left->isblack())){
                 sib->right->color=0;
                 sib->color=1;
                 left_rotate(sib);
@@ -269,7 +269,7 @@ class RBtree {
             //assert(t->parent()->sz==sz);
         }else{
             Ptr t=sib->parent();
-            if(sib->left!=nullptr&&sib->left->isred()){
+            if(sib->left!=nullptr&&sib->left->isred()&&(sib->right==nullptr||sib->right->isblack())){
                 sib->left->color=0;
                 sib->color=1;
                 right_rotate(sib);
@@ -361,10 +361,7 @@ class RBtree {
                 replacement->parent(node->parent());
                 assert(replacement->isred());
                 assert(node->isblack());
-                if(node->isblack()){
-                    if(replacement->isred())replacement->color=0;
-                    else maintain_remove(replacement);
-                }
+                replacement->color=0;
                 Ptr c=replacement;
                 while(c!=nullptr){
                     c->update_size();
