@@ -100,6 +100,14 @@ vector<bitset<N>> flow(const vector<vector<int>> &rG) {
   return dom;
 }
 // Tarjan
+/// Reference: [https://usaco.guide/adv/critical?lang=cpp]
+///
+/// u strictly dominates v if u dominate v and u!=v
+/// let the immediate dominator of u, or idom(u), be the unique node v such that
+/// it strictly dominates node u and every other dominator of node u strictly
+/// dominates node v Let e(u) be the entry time in node u doing a Euler tour
+/// semi-dominator of u ,sdom(u), be a v such that there's a path from v to u
+/// and e(i)>=e(u) for every intermidate node i along the path from u to v
 
 int main() {
   vector<vector<int>> G(N);
