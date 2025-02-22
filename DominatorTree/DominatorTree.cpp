@@ -212,6 +212,60 @@ vector<bitset<N>> flow3(const Adj &rG, const vector<int> &po,
 /// dominates node v Let e(u) be the entry time in node u doing a Euler tour
 /// semi-dominator of u ,sdom(u), be a v such that there's a path from v to u
 /// and e(i)>=e(u) for every intermidate node i along the path from u to v
+///
+///
+///
+///
+using vi = vector<int>;
+using vm = vector<bitset<N>>;
+int pa[N], o[N], dom[N], e[N];
+vm pred[N], bucket[N];
+int tot = 0;
+void dfs(int u, const Adj &G, int p) {
+  e[u] = ++tot;
+  o[tot] = u;
+  pa[u] = p;
+  for (int v : G[u]) {
+    if (!e[v])
+      dfs(v, G, u);
+  }
+}
+int fa[N], label[N];
+void compress(int u) {
+  if (fa[fa[u]] != 0) {
+    compress(fa[u]);
+    if (e[label[fa[u]]] < e[label[u]]) {
+      label[u] = label[fa[u]];
+    }
+    fa[u] = fa[fa[u]];
+  }
+}
+int find(int v) {
+  if (fa[v] == 0)
+    return 0;
+  else {
+    compress(v);
+    return label[v];
+  }
+}
+void link(int v, int w) { fa[w] = v; }
+vm tarjan(int start, const Adj &G, const Adj &rG) {
+  vm res;
+  dfs(start, G, -1);
+  memcpy(label, o, sizeof(o));
+  for (int i = N; i >= 2; i--) {
+    int w = o[i];
+    for (int v : rG[w]) {
+      int u = find(v);
+      if (e[u] < e[w]) {
+        e[w] = e[u];
+      }
+    }
+    bucket[o[e[w]]][w] = 1;
+    link(pa[w], w);
+  }
+  return res;
+}
 void test() {
   Adj G = rand_comp(N);
   auto ans = bruteforce(G);
@@ -286,8 +340,10 @@ void test() {
     }
   }
 }
+void test_tarjan() {}
+
 int main() {
-  for (int i = 0; i < 1; i++)
-    test();
+  // for (int i = 0; i < 1; i++)
+  //   test();
   return 0;
 }
