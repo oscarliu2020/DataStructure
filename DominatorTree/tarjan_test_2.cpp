@@ -38,9 +38,10 @@ void tarjan(int s, const Adj &G, const Adj &rG) {
   assert(e[s] == 1);
   assert(o[1] == s);
   Adj t(G.size());
-  memset(dom, -1, G.size());
+  memset(dom, -1, G.size() * sizeof(int));
   for (int i = cnt; i >= 2; i--) {
     int w = o[i];
+    assert(pa[w] != -1);
     for (int v : rG[w]) {
       if (!e[v])
         continue;
