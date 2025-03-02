@@ -20,15 +20,20 @@ void dfs(int u, int p, const Adj &G) {
       dfs(v, u, G);
   }
 }
-
+void compress(int v) {
+  if (fa[fa[v]] != fa[v]) {
+    compress(fa[v]);
+    if (e[label[fa[v]]] < e[label[v]]) {
+      label[v] = label[fa[v]];
+    }
+    fa[v] = fa[fa[v]];
+  }
+}
 int find(int v) {
   if (v == fa[v])
     return v;
-  int nf = find(fa[v]);
-  if (e[label[fa[v]]] < e[label[v]]) {
-    label[v] = label[fa[v]];
-  }
-  fa[v] = nf;
+  compress(v);
+
   return label[v];
 }
 int dom[N];
