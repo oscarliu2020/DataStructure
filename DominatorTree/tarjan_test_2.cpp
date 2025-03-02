@@ -9,7 +9,7 @@ constexpr int N = 200001;
 int e[N], o[N];
 int cnt;
 int label[N], fa[N], pa[N];
-void dfs(int u, int p, const Adj &G) {
+void dfs(int u, int p, const Adj &G, Adj &rG) {
   e[u] = ++cnt;
   o[cnt] = u;
   label[u] = u;
@@ -17,7 +17,8 @@ void dfs(int u, int p, const Adj &G) {
   fa[u] = u;
   for (int v : G[u]) {
     if (!e[v])
-      dfs(v, u, G);
+      dfs(v, u, G, rG);
+    rG[v].push_back(u);
   }
 }
 void compress(int v) {
@@ -38,8 +39,9 @@ int find(int v) {
 }
 int dom[N];
 inline void link(int w, int v) { fa[v] = w; }
-void tarjan(int s, const Adj &G, const Adj &rG) {
-  dfs(s, -1, G);
+void tarjan(int s, const Adj &G) {
+  Adj rG(G.size());
+  dfs(s, -1, G, rG);
   assert(e[s] == 1);
   assert(o[1] == s);
   Adj t(G.size());
@@ -48,10 +50,8 @@ void tarjan(int s, const Adj &G, const Adj &rG) {
     int w = o[i];
     assert(pa[w] != -1);
     for (int v : rG[w]) {
-      if (!e[v])
-        continue;
       int u = find(v);
-      assert(e[u]);
+      assert(e[u] && e[v]);
       e[w] = min(e[u], e[w]);
     }
     link(pa[w], w);
@@ -82,9 +82,8 @@ int main() {
     int u, v;
     cin >> u >> v;
     G[u].push_back(v);
-    rG[v].push_back(u);
   }
-  tarjan(s, G, rG);
+  tarjan(s, G);
   for (int i = 0; i < n; i++) {
     cout << dom[i] << ' ';
   }
