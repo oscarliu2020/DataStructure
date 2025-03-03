@@ -23,45 +23,45 @@ struct Graph {
 };
 struct SemiNCA {
   // int dom[N], fa[N], pa[N], e[N], o[N], label[N];
-  vector<int> dom, fa, pa, e, o, label;
+  vector<int> dom, fa, pa, e, o, label, sdom;
   int cnt = 0;
   Graph G, rG;
   int n;
   SemiNCA(int n)
       : G(n), rG(n), dom(n, -1), pa(n, -1), fa(n, -1), e(n, 0), o(n + 1, -1),
-        label(n, 0) {
+        label(n, 0), sdom(n, 0) {
     this->n = n;
   }
-  void link(int v, int w) { pa[w] = v; }
-  // void compress(int v) {
-  //   if (fa[fa[v]] != fa[v]) {
-  //     compress(fa[v]);
-  //     if (e[label[fa[v]]] < e[label[v]]) {
-  //       label[v] = label[fa[v]];
-  //     }
-  //     fa[v] = fa[fa[v]];
-  //   }
-  // }
-  // int find(int v) {
-  //   if (v == fa[v])
-  //     return v;
-  //   compress(v);
-  //
-  //   return label[v];
-  // }
-  int find(int u, bool m = false) {
-    if (fa[u] == u)
-      return m ? -1 : u;
-    int v = find(fa[u], m || 1);
-    if (v < 0)
-      return u;
-    if (e[label[fa[u]]] < e[label[u]])
-      label[u] = label[fa[u]];
-    fa[u] = v;
-    return (m ? v : label[u]);
+  void link(int v, int w) { fa[w] = v; }
+  void compress(int v) {
+    if (fa[fa[v]] != fa[v]) {
+      compress(fa[v]);
+      if (sdom[label[fa[v]]] < sdom[label[v]]) {
+        label[v] = label[fa[v]];
+      }
+      fa[v] = fa[fa[v]];
+    }
   }
+  int find(int v) {
+    if (v == fa[v])
+      return v;
+    compress(v);
+
+    return label[v];
+  }
+  // int find(int u, bool m = false) {
+  //   if (fa[u] == u)
+  //     return m ? -1 : u;
+  //   int v = find(fa[u], m || 1);
+  //   if (v < 0)
+  //     return u;
+  //   if (e[label[fa[u]]] < e[label[u]])
+  //     label[u] = label[fa[u]];
+  //   fa[u] = v;
+  //   return (m ? v : label[u]);
+  // }
   void dfs(int u, int p) {
-    e[u] = ++cnt;
+    sdom[u] = e[u] = ++cnt;
     fa[u] = label[u] = u;
     o[cnt] = u;
     pa[u] = p;
@@ -81,14 +81,15 @@ struct SemiNCA {
       int w = o[i];
       for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
         int v = rG.edges[x].v;
-        e[w] = min(e[w], e[find(v)]);
+        int u = find(v);
+        sdom[w] = min(sdom[w], sdom[u]);
       }
       link(pa[w], w);
       dom[w] = pa[w];
     }
     for (int i = 2; i <= cnt; i++) {
       int v = o[i];
-      while (e[dom[v]] > e[v]) {
+      while (e[dom[v]] > sdom[v]) {
         dom[v] = dom[dom[v]];
       }
     }
