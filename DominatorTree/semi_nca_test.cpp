@@ -33,33 +33,33 @@ struct SemiNCA {
     this->n = n;
   }
   void link(int v, int w) { fa[w] = v; }
-  void compress(int v) {
-    if (fa[fa[v]] != fa[v]) {
-      compress(fa[v]);
-      if (sdom[label[fa[v]]] < sdom[label[v]]) {
-        label[v] = label[fa[v]];
-      }
-      fa[v] = fa[fa[v]];
-    }
-  }
-  int find(int v) {
-    if (v == fa[v])
-      return v;
-    compress(v);
-
-    return label[v];
-  }
-  // int find(int u, bool m = false) {
-  //   if (fa[u] == u)
-  //     return m ? -1 : u;
-  //   int v = find(fa[u], m || 1);
-  //   if (v < 0)
-  //     return u;
-  //   if (e[label[fa[u]]] < e[label[u]])
-  //     label[u] = label[fa[u]];
-  //   fa[u] = v;
-  //   return (m ? v : label[u]);
+  // void compress(int v) {
+  //   if (fa[fa[v]] != fa[v]) {
+  //     compress(fa[v]);
+  //     if (sdom[label[fa[v]]] < sdom[label[v]]) {
+  //       label[v] = label[fa[v]];
+  //     }
+  //     fa[v] = fa[fa[v]];
+  //   }
   // }
+  // int find(int v) {
+  //   if (v == fa[v])
+  //     return v;
+  //   compress(v);
+  //
+  //   return label[v];
+  // }
+  int find(int u, bool m = false) {
+    if (fa[u] == u)
+      return m ? -1 : u;
+    int v = find(fa[u], m || 1);
+    if (v < 0)
+      return (m ? fa[u] : label[u]);
+    if (sdom[label[fa[u]]] < sdom[label[u]])
+      label[u] = label[fa[u]];
+    fa[u] = v;
+    return (m ? v : label[u]);
+  }
   void dfs(int u, int p) {
     sdom[u] = e[u] = ++cnt;
     fa[u] = label[u] = u;
