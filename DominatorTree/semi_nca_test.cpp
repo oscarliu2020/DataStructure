@@ -28,8 +28,8 @@ struct SemiNCA {
   Graph G, rG;
   int n;
   SemiNCA(int n)
-      : G(n), rG(n), dom(n, -1), pa(n, -1), fa(n, -1), e(n, 0), o(n + 1, -1),
-        label(n, 0), sdom(n, 0) {
+      : G(n), rG(n + 1), dom(n + 1, -1), pa(n + 1, -1), fa(n + 1, -1), e(n, 0),
+        o(n + 1, -1), label(n + 1, -1), sdom(n + 1, -1) {
     this->n = n;
   }
   void link(int v, int w) { fa[w] = v; }
@@ -60,25 +60,26 @@ struct SemiNCA {
     fa[u] = v;
     return (m ? v : label[u]);
   }
-  void dfs(int u, int p) {
-    sdom[u] = e[u] = ++cnt;
-    fa[u] = label[u] = u;
+  void dfs(int u) {
+    e[u] = ++cnt;
+    sdom[cnt] = fa[cnt] = label[cnt] = cnt;
     o[cnt] = u;
-    pa[u] = p;
     for (int x = G.head[u]; ~x; x = G.edges[x].next) {
       int v = G.edges[x].v;
       if (!e[v]) {
-        dfs(v, u);
+        dfs(v);
+        assert(e[v]);
+        pa[e[v]] = e[u];
       }
-      rG.add_edge(v, u);
+      assert(e[v]);
+      rG.add_edge(e[v], e[u]);
     }
   }
   void add_edge(int u, int v) { G.add_edge(u, v); }
-  void solve(int s) {
-    dfs(s, -1);
+  vector<int> solve(int s) {
+    dfs(s);
     assert(o[1] == s && e[s] == 1);
-    for (int i = cnt; i >= 2; i--) {
-      int w = o[i];
+    for (int w = cnt; w >= 2; w--) {
       for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
         int v = rG.edges[x].v;
         int u = find(v);
@@ -87,13 +88,17 @@ struct SemiNCA {
       link(pa[w], w);
       dom[w] = pa[w];
     }
-    for (int i = 2; i <= cnt; i++) {
-      int v = o[i];
-      while (e[dom[v]] > sdom[v]) {
+    for (int v = 2; v <= cnt; v++) {
+      while (dom[v] > sdom[v]) {
         dom[v] = dom[dom[v]];
       }
     }
-    dom[s] = s;
+    dom[1] = 1;
+    vector<int> out_doms(n, -1);
+    for (int i = 1; i <= cnt; i++) {
+      out_doms[o[i]] = o[dom[i]];
+    }
+    return out_doms;
   }
 };
 int main() {
@@ -106,7 +111,7 @@ int main() {
     cin >> u >> v;
     sol.add_edge(u, v);
   }
-  sol.solve(s);
+  auto doms = sol.solve(s);
   for (int i = 0; i < n; i++)
-    cout << sol.dom[i] << ' ';
+    cout << doms[i] << ' ';
 }
