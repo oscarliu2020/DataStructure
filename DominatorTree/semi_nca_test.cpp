@@ -22,7 +22,6 @@ struct Graph {
   }
 };
 struct SemiNCA {
-  // int dom[N], fa[N], pa[N], e[N], o[N], label[N];
   vector<int> dom, fa, pa, e, o, label, sdom;
   int cnt = 0;
   Graph G, rG;
@@ -33,22 +32,6 @@ struct SemiNCA {
     this->n = n;
   }
   void link(int v, int w) { fa[w] = v; }
-  // void compress(int v) {
-  //   if (fa[fa[v]] != fa[v]) {
-  //     compress(fa[v]);
-  //     if (sdom[label[fa[v]]] < sdom[label[v]]) {
-  //       label[v] = label[fa[v]];
-  //     }
-  //     fa[v] = fa[fa[v]];
-  //   }
-  // }
-  // int find(int v) {
-  //   if (v == fa[v])
-  //     return v;
-  //   compress(v);
-  //
-  //   return label[v];
-  // }
   int find(int u, bool m = false) {
     if (fa[u] == u)
       return m ? -1 : u;
