@@ -38,7 +38,7 @@ struct SemiNCA {
     int v = find(fa[u], m || 1);
     if (v < 0)
       return (m ? fa[u] : label[u]);
-    if (sdom[label[fa[u]]] < sdom[label[u]])
+    if (label[fa[u]] < label[u])
       label[u] = label[fa[u]];
     fa[u] = v;
     return (m ? v : label[u]);
@@ -67,6 +67,7 @@ struct SemiNCA {
         int v = rG.edges[x].v;
         int u = find(v);
         sdom[w] = min(sdom[w], sdom[u]);
+        label[w] = sdom[w];
       }
       link(pa[w], w);
       dom[w] = pa[w];
