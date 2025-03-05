@@ -11,7 +11,7 @@ random_device rd;
 mt19937 gen(rd());
 using Adj = vector<vector<int>>;
 using vvi = vector<vector<int>>;
-constexpr int N = 20;
+constexpr int N = 1e8;
 Adj rand_comp(int n) {
   vvi M(n, vector<int>(n, 0));
   unordered_set<int> S;
@@ -213,59 +213,148 @@ vector<bitset<N>> flow3(const Adj &rG, const vector<int> &po,
 /// semi-dominator of u ,sdom(u), be a v such that there's a path from v to u
 /// and e(i)>=e(u) for every intermidate node i along the path from u to v
 ///
-///
-///
-///
-using vi = vector<int>;
-using vm = vector<bitset<N>>;
-int pa[N], o[N], dom[N], e[N];
-vm pred[N], bucket[N];
-int tot = 0;
-void dfs(int u, const Adj &G, int p) {
-  e[u] = ++tot;
-  o[tot] = u;
-  pa[u] = p;
-  for (int v : G[u]) {
-    if (!e[v])
-      dfs(v, G, u);
+
+struct Edge {
+  int v, next;
+};
+struct Graph {
+  vector<Edge> edges;
+  vector<int> head;
+  int size = 0;
+  Graph(int n) : head(n, -1) {}
+  void add_edge(int u, int v) {
+    int e = size++;
+    if (size >= edges.size())
+      edges.push_back((Edge){-1, -1});
+    edges[e] = {v, head[u]};
+    head[u] = e;
   }
-}
-int fa[N], label[N];
-void compress(int u) {
-  if (fa[fa[u]] != 0) {
-    compress(fa[u]);
-    if (e[label[fa[u]]] < e[label[u]]) {
-      label[u] = label[fa[u]];
-    }
-    fa[u] = fa[fa[u]];
+};
+struct Frame {
+  int u;
+  int e;
+  int prev;
+};
+class Stack {
+  array<Frame, N> *inner;
+  int sz = 0;
+
+public:
+  Stack() { inner = new array<Frame, N>; }
+  ~Stack() { delete inner; }
+  void push(const Frame f) {
+    assert(sz < inner[0].size());
+    inner[0][sz++] = f;
   }
-}
-int find(int v) {
-  if (fa[v] == 0)
-    return 0;
-  else {
-    compress(v);
-    return label[v];
+  void pop() {
+    assert(sz > 0);
+    --sz;
   }
-}
-void link(int v, int w) { fa[w] = v; }
-vm tarjan(int start, const Adj &G, const Adj &rG) {
-  vm res;
-  dfs(start, G, -1);
-  memcpy(label, o, sizeof(o));
-  for (int i = N; i >= 2; i--) {
-    int w = o[i];
-    for (int v : rG[w]) {
-      int u = find(v);
-      if (e[u] < e[w]) {
-        e[w] = e[u];
+  Frame &top() {
+    assert(sz > 0);
+    return inner[0][sz - 1];
+  }
+  size_t size() { return sz; }
+};
+class SLT {
+  vector<int> e, o, label, fa, pa;
+  int n, cnt;
+  Graph G, rG;
+  // void dfs(int u) {
+  //   e[u] = ++cnt;
+  //   o[cnt] = u;
+  //   for (int x = G.head[u]; ~x; x = G.edges[x].next) {
+  //     int v = G.edges[x].v;
+  //     if (!e[v]) {
+  //       dfs(v);
+  //       pa[v] = u;
+  //     }
+  //     rG.add_edge(v, u);
+  //   }
+  // }
+  void dfsi(int r) {
+    e[r] = ++cnt;
+    o[cnt] = r;
+    Stack st;
+    st.push({r, G.head[r], -1});
+    while (st.size()) {
+      auto &[u, nxt, prev] = st.top();
+      if (~prev) {
+        rG.add_edge(prev, u);
+        prev = -1;
+      }
+      if (nxt != -1) {
+        int v = G.edges[nxt].v;
+        nxt = G.edges[nxt].next;
+        if (!e[v]) {
+          prev = v;
+          Frame t{v, G.head[v], -1};
+          st.push(t);
+          e[v] = ++cnt;
+          o[cnt] = v;
+          pa[v] = u;
+        } else {
+          rG.add_edge(v, u);
+        }
+      } else {
+        st.pop();
       }
     }
-    bucket[o[e[w]]][w] = 1;
-    link(pa[w], w);
   }
-  return res;
-}
+
+  int find(int u, bool m = 0) {
+    if (fa[u] == u)
+      return m ? -1 : u;
+    int v = find(fa[u], m || 1);
+    if (v < 0)
+      return m ? fa[u] : label[u];
+    if (e[label[fa[u]]] < e[label[u]])
+      label[u] = label[fa[u]];
+    fa[u] = v;
+    return m ? v : label[u];
+  }
+  int link(int v, int w) { return fa[w] = v; }
+
+public:
+  SLT(int n)
+      : G(n), rG(n), n(n), cnt(0), e(n), o(n + 1), label(n), fa(n), pa(n) {}
+  void add_edge(int u, int v) { G.add_edge(u, v); }
+  vector<int> solve(int s) {
+    dfsi(s);
+    Adj t(n);
+    vector<int> dom(n, -1);
+    for (int i = 0; i < n; i++) {
+      label[i] = fa[i] = i;
+    }
+    for (int i = cnt; i >= 2; i--) {
+      int w = o[i];
+      for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
+        int v = rG.edges[x].v;
+        int u = find(v);
+        e[w] = min(e[w], e[u]);
+      }
+      link(pa[w], w);
+      t[o[e[w]]].push_back(w);
+      for (int v : t[pa[w]]) {
+        int u = find(v);
+        if (e[u] == e[v])
+          dom[v] = pa[w];
+        else {
+          assert(e[u] < e[v]);
+          dom[v] = u;
+        }
+      }
+      t[pa[w]].clear();
+    }
+    for (int i = 2; i <= cnt; i++) {
+      int v = o[i];
+      if (dom[v] != o[e[v]])
+        dom[v] = dom[dom[v]];
+    }
+    dom[s] = s;
+    return dom;
+  }
+};
 void test() {
   Adj G = rand_comp(N);
   auto ans = bruteforce(G);
@@ -340,10 +429,227 @@ void test() {
     }
   }
 }
-void test_tarjan() {}
+class BFSCooper {
+  int cnt;
+  vector<int> po, pi, idom;
+  Graph G, rG;
+  vector<bool> vis;
+  int n;
+  int intersect(int u, int v) {
+    while (u != v) {
+      if (pi[u] < pi[v])
+        u = idom[u];
+      else
+        v = idom[v];
+    }
+    return u;
+  }
+
+public:
+  BFSCooper(int n) : n(n), rG(n), G(n), vis(n, 0), po(n), pi(n), idom(n, -1) {
+    fill(idom.begin(), idom.begin() + n, -1);
+  }
+  void add_edge(int u, int v) {
+    G.add_edge(u, v);
+    rG.add_edge(v, u);
+  }
+  vector<int> solve(int s) {
+    queue<int> q;
+    q.push(s);
+    vis[s] = 1;
+    while (q.size()) {
+      int t = q.front();
+      q.pop();
+      pi[t] = n - cnt - 1;
+      po[cnt++] = t;
+      for (int x = G.head[t]; ~x; x = G.edges[x].next) {
+        int v = G.edges[x].v;
+        if (vis[v])
+          continue;
+        vis[v] = 1;
+        q.push(v);
+      }
+    }
+    idom[s] = s;
+    bool changed = true;
+    while (changed) {
+      changed = false;
+      for (int i = 1; i < cnt; i++) {
+        int temp = -1;
+        int u = po[i];
+        for (int x = rG.head[u]; ~x; x = rG.edges[x].next) {
+          int v = rG.edges[x].v;
+          if (idom[v] == -1)
+            continue;
+          if (temp == -1)
+            temp = v;
+          else
+            temp = intersect(temp, v);
+        }
+        if (idom[u] != temp)
+          idom[u] = temp, changed = true;
+      }
+    }
+    return idom;
+  }
+};
+struct SemiNCA {
+  vector<int> dom, fa, pa, e, o, label, sdom;
+  int cnt = 0;
+  Graph G, rG;
+  int n;
+  SemiNCA(int n)
+      : G(n), rG(n + 1), dom(n + 1, -1), pa(n + 1, -1), fa(n + 1, -1), e(n, 0),
+        o(n + 1, -1), label(n + 1, -1), sdom(n + 1, -1) {
+    this->n = n;
+  }
+  void link(int v, int w) { fa[w] = v; }
+  int find(int u, bool m = false) {
+    if (fa[u] == u)
+      return m ? -1 : u;
+    int v = find(fa[u], m || 1);
+    if (v < 0)
+      return (m ? fa[u] : label[u]);
+    if (label[fa[u]] < label[u])
+      label[u] = label[fa[u]];
+    fa[u] = v;
+    return (m ? v : label[u]);
+  }
+  void dfs(int u) {
+    e[u] = ++cnt;
+    sdom[cnt] = fa[cnt] = label[cnt] = cnt;
+    o[cnt] = u;
+    for (int x = G.head[u]; ~x; x = G.edges[x].next) {
+      int v = G.edges[x].v;
+      if (!e[v]) {
+        dfs(v);
+        assert(e[v]);
+        pa[e[v]] = e[u];
+      }
+      assert(e[v]);
+      rG.add_edge(e[v], e[u]);
+    }
+  }
+  struct Frame {
+    int u, nxt;
+    int prev;
+  };
+
+  class Stack {
+    array<Frame, N> *inner;
+    int sz = 0;
+
+  public:
+    Stack() { inner = new array<Frame, N>; }
+    ~Stack() { delete inner; }
+    void push(const Frame f) {
+      assert(sz < inner[0].size());
+      inner[0][sz++] = f;
+    }
+    void pop() {
+      assert(sz > 0);
+      --sz;
+    }
+    Frame &top() {
+      assert(sz > 0);
+      return inner[0][sz - 1];
+    }
+    size_t size() { return sz; }
+  };
+  ;
+  void dfsi(int r) {
+    Stack st;
+    st.push({r, G.head[r], -1});
+    e[r] = ++cnt;
+    o[cnt] = r;
+    while (st.size()) {
+      auto &[u, nxt, prev] = st.top();
+      if (prev != -1) {
+        assert(e[prev]);
+        rG.add_edge(e[prev], e[u]);
+        pa[e[prev]] = e[u];
+        prev = -1;
+      }
+      if (~nxt) {
+        int v = G.edges[nxt].v;
+        nxt = G.edges[nxt].next;
+        if (!e[v]) {
+          prev = v;
+          st.push({v, G.head[v], -1});
+          e[v] = ++cnt;
+          o[cnt] = v;
+        } else {
+          rG.add_edge(e[v], e[u]);
+        }
+      } else {
+        st.pop();
+      }
+    }
+    for (int i = 0; i <= cnt; i++)
+      sdom[i] = fa[i] = label[i] = i;
+  }
+  void add_edge(int u, int v) { G.add_edge(u, v); }
+  vector<int> solve(int s) {
+    dfsi(s);
+    assert(o[1] == s && e[s] == 1);
+    for (int w = cnt; w >= 2; w--) {
+      for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
+        int v = rG.edges[x].v;
+        int u = find(v);
+        sdom[w] = min(sdom[w], sdom[u]);
+      }
+      link(pa[w], w);
+      label[w] = sdom[w];
+      dom[w] = pa[w];
+    }
+    for (int v = 2; v <= cnt; v++) {
+      while (dom[v] > sdom[v]) {
+        dom[v] = dom[dom[v]];
+      }
+    }
+    dom[1] = 1;
+    vector<int> out_doms(n, -1);
+    for (int i = 1; i <= cnt; i++) {
+      out_doms[o[i]] = o[dom[i]];
+    }
+    return out_doms;
+  }
+};
+constexpr int NN = 1e5;
+void test_tarjan() {
+  auto g = rand_comp(NN);
+  BFSCooper s1(NN);
+  SLT s2(NN);
+  SemiNCA s3(NN);
+  for (int i = 0; i < g.size(); i++) {
+    for (int v : g[i]) {
+      s1.add_edge(i, v);
+      s2.add_edge(i, v);
+      s3.add_edge(i, v);
+    }
+  }
+  cout << "Benchmarking...\n" << endl;
+  {
+    clock_t start = clock();
+    s1.solve(0);
+    cout << "BFS Iterative: " << (clock() - start) / (double)CLOCKS_PER_SEC
+         << endl;
+    start = clock();
+    s2.solve(0);
+    cout << "SLT Iterative: " << (clock() - start) / (double)CLOCKS_PER_SEC
+         << endl;
+    start = clock();
+    s3.solve(0);
+    cout << "Semi-NCA Iterative: " << (clock() - start) / (double)CLOCKS_PER_SEC
+         << endl;
+  }
+}
 
 int main() {
   // for (int i = 0; i < 1; i++)
   //   test();
+  for (int i = 0; i < 1; i++) {
+    test_tarjan();
+  }
   return 0;
 }
