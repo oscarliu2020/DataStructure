@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <cstring>
 #include <iostream>
+#include <stack>
 #include <vector>
 using namespace std;
 constexpr int N = 200001;
@@ -20,10 +21,45 @@ struct Graph {
     head[u] = e;
   }
 };
+struct Frame {
+  int u, e;
+  bool post;
+};
 class SLT {
   vector<int> e, o, label, fa, pa;
   int n, cnt;
   Graph G, rG;
+  void dfsi(int r) {
+    e[r] = ++cnt;
+    o[cnt] = r;
+    stack<Frame> st;
+    st.push({r, G.head[r], 0});
+    while (st.size()) {
+      auto &[u, nxt, post] = st.top();
+      if (post) {
+        rG.add_edge(nxt, u);
+        st.pop();
+        continue;
+      }
+      if (nxt != -1) {
+        int v = G.edges[nxt].v;
+        nxt = G.edges[nxt].next;
+        if (!e[v]) {
+          Frame mark = {u, v, 1};
+          st.push(mark);
+          Frame t{v, G.head[v], 0};
+          st.push(t);
+          e[v] = ++cnt;
+          o[cnt] = v;
+          pa[v] = u;
+        } else {
+          rG.add_edge(v, u);
+        }
+      } else {
+        st.pop();
+      }
+    }
+  }
   void dfs(int u) {
     e[u] = ++cnt;
     o[cnt] = u;
@@ -54,7 +90,7 @@ public:
       : G(n), rG(n), n(n), cnt(0), e(n), o(n + 1), label(n), fa(n), pa(n) {}
   void add_edge(int u, int v) { G.add_edge(u, v); }
   vector<int> solve(int s) {
-    dfs(s);
+    dfsi(s);
     Adj t(n);
     vector<int> dom(n, -1);
     for (int i = 0; i < n; i++) {

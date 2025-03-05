@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <iterator>
+#include <stack>
 #include <vector>
 using namespace std;
 constexpr int N = 200001;
@@ -58,9 +59,45 @@ struct SemiNCA {
       rG.add_edge(e[v], e[u]);
     }
   }
+  struct Frame {
+    int u, nxt;
+    bool post;
+  };
+  void dfsi(int r) {
+    stack<Frame> st;
+    st.push({r, G.head[r], 0});
+    e[r] = ++cnt;
+    o[cnt] = r;
+    while (st.size()) {
+      auto &[u, nxt, post] = st.top();
+      if (post) {
+        assert(e[nxt]);
+        rG.add_edge(e[nxt], e[u]);
+        pa[e[nxt]] = e[u];
+        st.pop();
+        continue;
+      }
+      if (~nxt) {
+        int v = G.edges[nxt].v;
+        nxt = G.edges[nxt].next;
+        if (!e[v]) {
+          st.push({u, v, 1});
+          st.push({v, G.head[v], 0});
+          e[v] = ++cnt;
+          o[cnt] = v;
+        } else {
+          rG.add_edge(e[v], e[u]);
+        }
+      } else {
+        st.pop();
+      }
+    }
+    for (int i = 0; i <= cnt; i++)
+      sdom[i] = fa[i] = label[i] = i;
+  }
   void add_edge(int u, int v) { G.add_edge(u, v); }
   vector<int> solve(int s) {
-    dfs(s);
+    dfsi(s);
     assert(o[1] == s && e[s] == 1);
     for (int w = cnt; w >= 2; w--) {
       for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
