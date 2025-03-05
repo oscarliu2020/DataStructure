@@ -596,7 +596,7 @@ struct SemiNCA {
       for (int x = rG.head[w]; ~x; x = rG.edges[x].next) {
         int v = rG.edges[x].v;
         int u = find(v);
-        sdom[w] = min(sdom[w], sdom[u]);
+        sdom[w] = min(sdom[w], u);
       }
       link(pa[w], w);
       label[w] = sdom[w];
