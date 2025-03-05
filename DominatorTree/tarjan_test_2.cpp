@@ -23,7 +23,26 @@ struct Graph {
 };
 struct Frame {
   int u, e;
-  bool post;
+  int prev;
+};
+class Stack {
+  array<Frame, N> inner;
+  int sz = 0;
+
+public:
+  void push(const Frame f) {
+    assert(sz < inner.size());
+    inner[sz++] = f;
+  }
+  void pop() {
+    assert(sz > 0);
+    --sz;
+  }
+  Frame &top() {
+    assert(sz > 0);
+    return inner[sz - 1];
+  }
+  size_t size() { return sz; }
 };
 class SLT {
   vector<int> e, o, label, fa, pa;
@@ -32,22 +51,20 @@ class SLT {
   void dfsi(int r) {
     e[r] = ++cnt;
     o[cnt] = r;
-    stack<Frame> st;
-    st.push({r, G.head[r], 0});
+    Stack st;
+    st.push({r, G.head[r], -1});
     while (st.size()) {
-      auto &[u, nxt, post] = st.top();
-      if (post) {
-        rG.add_edge(nxt, u);
-        st.pop();
-        continue;
+      auto &[u, nxt, prev] = st.top();
+      if (~prev) {
+        rG.add_edge(prev, u);
+        prev = -1;
       }
       if (nxt != -1) {
         int v = G.edges[nxt].v;
         nxt = G.edges[nxt].next;
         if (!e[v]) {
-          Frame mark = {u, v, 1};
-          st.push(mark);
-          Frame t{v, G.head[v], 0};
+          prev = v;
+          Frame t{v, G.head[v], -1};
           st.push(t);
           e[v] = ++cnt;
           o[cnt] = v;

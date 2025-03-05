@@ -61,28 +61,46 @@ struct SemiNCA {
   }
   struct Frame {
     int u, nxt;
-    bool post;
+    int prev;
+  };
+  class Stack {
+    array<Frame, N> inner;
+    int sz = 0;
+
+  public:
+    void push(const Frame f) {
+      assert(sz < inner.size());
+      inner[sz++] = f;
+    }
+    void pop() {
+      assert(sz > 0);
+      --sz;
+    }
+    Frame &top() {
+      assert(sz > 0);
+      return inner[sz - 1];
+    }
+    size_t size() { return sz; }
   };
   void dfsi(int r) {
-    stack<Frame> st;
-    st.push({r, G.head[r], 0});
+    Stack st;
+    st.push({r, G.head[r], -1});
     e[r] = ++cnt;
     o[cnt] = r;
     while (st.size()) {
-      auto &[u, nxt, post] = st.top();
-      if (post) {
-        assert(e[nxt]);
-        rG.add_edge(e[nxt], e[u]);
-        pa[e[nxt]] = e[u];
-        st.pop();
-        continue;
+      auto &[u, nxt, prev] = st.top();
+      if (prev != -1) {
+        assert(e[prev]);
+        rG.add_edge(e[prev], e[u]);
+        pa[e[prev]] = e[u];
+        prev = -1;
       }
       if (~nxt) {
         int v = G.edges[nxt].v;
         nxt = G.edges[nxt].next;
         if (!e[v]) {
-          st.push({u, v, 1});
-          st.push({v, G.head[v], 0});
+          prev = v;
+          st.push({v, G.head[v], -1});
           e[v] = ++cnt;
           o[cnt] = v;
         } else {
